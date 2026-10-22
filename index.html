@@ -21,10 +21,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./config.js"></script>
 <script>
+
 const db = window.supabase.createClient(
-  config.supabaseUrl,
-  config.supabaseKey
+  window.CLAIRE_CONFIG.supabaseUrl,
+  window.CLAIRE_CONFIG.supabaseKey
 );
+
 
 const rows = document.getElementById('rows');
 

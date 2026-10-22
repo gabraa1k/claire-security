@@ -17,7 +17,142 @@
 <div class="dashboard" id="dashboard"><aside class="panel side"><button class="active" onclick="showList()">▦ Informes</button><button onclick="showList()">♙ Jugadores</button><button onclick="showList()">⚙ Configuración</button><button onclick="showList()">🔒 Seguridad</button></aside><div class="panel"><div class="stats" style="margin:0;grid-template-columns:repeat(3,1fr)"><div class="stat"><strong>24</strong><span>Escaneos demo</span></div><div class="stat"><strong style="color:var(--site-primary)">7</strong><span>Con alertas</span></div><div class="stat"><strong style="color:var(--warn)">5</strong><span>Pendientes</span></div></div><div class="toolbar"><input class="field" id="search" placeholder="Buscar por jugador o ID…" oninput="filterRows()"><button class="btn" onclick="showReport('CS-8F31A2','AlexGamer')">Abrir informe ejemplo</button></div><div class="tablewrap"><table><thead><tr><th>ID informe</th><th>Jugador</th><th>Fecha (demo)</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="rows"><tr data-search="cs-8f31a2 alexgamer"><td>CS-8F31A2</td><td>AlexGamer</td><td>22/10/2026 14:32</td><td><span class="pill pink">Con alertas</span></td><td><button class="btn" onclick="showReport('CS-8F31A2','AlexGamer')">Ver informe</button></td></tr><tr data-search="cs-7d04e91 marianar"><td>CS-7D04E91</td><td>MarianaR</td><td>22/10/2026 13:20</td><td><span class="pill yellow">En revisión</span></td><td><button class="btn" onclick="showReport('CS-7D04E91','MarianaR')">Ver informe</button></td></tr><tr data-search="cs-6a2c77 luisrivas"><td>CS-6A2C77</td><td>LuisRivas</td><td>22/10/2026 11:05</td><td><span class="pill green">Sin alertas</span></td><td><button class="btn" onclick="showReport('CS-6A2C77','LuisRivas')">Ver informe</button></td></tr></tbody></table></div><div class="notice">⚠ Los nombres y resultados de esta vista son ejemplos inventados. Esta demostración no está conectada al escáner ni guarda informes reales.</div></div></div>
 <div class="report panel" id="report"><button class="btn" onclick="showList()">← Volver a informes</button><div class="section-title"><div><div class="eyebrow">INFORME INDIVIDUAL</div><h2 id="reportTitle">CS-8F31A2</h2><p id="playerTitle">Jugador: AlexGamer</p></div><span class="pill pink">Pendiente de revisión</span></div><div class="detailgrid"><div class="stat"><span>ID único</span><strong id="reportId">CS-8F31A2</strong></div><div class="stat"><span>Nombre del jugador</span><strong id="playerName">AlexGamer</strong></div></div><div class="finding"><h4>Alerta de ejemplo · prioridad media</h4><p><b>Área:</b> Procesos activos</p><p><b>Indicador:</b> nombre de proceso coincidente</p><p><b>Detalle:</b> coincidencia ilustrativa, no extraída de un equipo real</p><p><b>Motivo:</b> el patrón requiere comprobación manual y puede tener explicaciones legítimas.</p><p><b>Siguiente paso:</b> verificar firma, ubicación y contexto antes de tomar decisiones.</p></div><div class="toolbar"><button class="btn" onclick="copyLink()">▣ Copiar enlace de ejemplo</button><button class="btn primary" onclick="discordDemo()">Enviar por Discord (demo)</button></div><div class="notice">🔒 En una versión publicada, el servidor exigirá una sesión de administrador válida para abrir este informe. Estos botones solo muestran el flujo de ejemplo.</div></div>
 </section><footer class="foot">CLAIRE SECURITY · Prototipo visual interactivo · Sin conexión al servidor ni al escáner real</footer></div></main><div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
 <script>
-function goHome(){document.getElementById('home').scrollIntoView({behavior:'smooth'})}function goDashboard(){document.getElementById('admin').scrollIntoView({behavior:'smooth'})}function showList(){document.getElementById('dashboard').classList.remove('hidden');document.getElementById('report').classList.remove('visible')}function showReport(id,name){document.getElementById('dashboard').classList.add('hidden');document.getElementById('report').classList.add('visible');document.getElementById('reportTitle').textContent=id;document.getElementById('reportId').textContent=id;document.getElementById('playerTitle').textContent='Jugador: '+name;document.getElementById('playerName').textContent=name;document.getElementById('report').scrollIntoView({behavior:'smooth'})}function filterRows(){let q=document.getElementById('search').value.toLowerCase();document.querySelectorAll('#rows tr').forEach(r=>r.style.display=r.dataset.search.includes(q)?'':'none')}function toast(s){let t=document.getElementById('toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}function copyLink(){toast('Demostración: en la versión real aquí se copiará el enlace privado.')}function discordDemo(){toast('Demostración: Discord aún no está conectado.')} 
-</script></body></html>
+const db = window.supabase.createClient(
+  config.supabaseUrl,
+  config.supabaseKey
+);
+
+const rows = document.getElementById('rows');
+
+function goHome() {
+  document.getElementById('home').scrollIntoView({ behavior: 'smooth' });
+}
+
+function goDashboard() {
+  document.getElementById('admin').scrollIntoView({ behavior: 'smooth' });
+}
+
+function showList() {
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('report').classList.remove('visible');
+}
+
+function toast(message) {
+  const t = document.getElementById('toast');
+  t.textContent = message;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function filterRows() {
+  const q = document.getElementById('search').value.toLowerCase();
+  rows.querySelectorAll('tr').forEach(row => {
+    row.style.display = row.dataset.search.includes(q) ? '' : 'none';
+  });
+}
+
+function showReport(report) {
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('report').classList.add('visible');
+  document.getElementById('reportTitle').textContent = report.report_code || report.id;
+  document.getElementById('reportId').textContent = report.report_code || report.id;
+  document.getElementById('playerTitle').textContent = 'Jugador: ' + (report.player_name || 'Sin nombre');
+  document.getElementById('playerName').textContent = report.player_name || 'Sin nombre';
+
+  const panel = document.getElementById('report');
+  panel.querySelectorAll('.finding').forEach(el => el.remove());
+
+  const finding = document.createElement('div');
+  finding.className = 'finding';
+  const title = document.createElement('h4');
+  title.textContent = 'Resultados del escaneo';
+  finding.appendChild(title);
+
+  const details = document.createElement('p');
+  details.textContent = typeof report.findings === 'string'
+    ? report.findings
+    : JSON.stringify(report.findings || {}, null, 2);
+  finding.appendChild(details);
+  panel.insertBefore(finding, panel.querySelector('.toolbar'));
+
+  panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function loadReports() {
+  rows.replaceChildren();
+  const { data: { session } } = await db.auth.getSession();
+
+  if (!session || session.user.app_metadata?.role !== 'admin') {
+    rows.innerHTML = '<tr><td colspan="5">Inicia sesión con una cuenta de administrador para consultar informes.</td></tr>';
+    return;
+  }
+
+  const { data, error } = await db
+    .from('scan_reports')
+    .select('id, report_code, player_name, player_identifier, scan_status, findings, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    rows.innerHTML = '<tr><td colspan="5">No se pudieron cargar los informes. Verifica tu sesión y los permisos de Supabase.</td></tr>';
+    console.error(error.message);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    rows.innerHTML = '<tr><td colspan="5">No hay informes guardados todavía.</td></tr>';
+    return;
+  }
+
+  data.forEach(report => {
+    const tr = document.createElement('tr');
+    tr.dataset.search = `${report.report_code || ''} ${report.player_name || ''}`.toLowerCase();
+
+    const date = report.created_at
+      ? new Date(report.created_at).toLocaleString('es-PR')
+      : '—';
+
+    [report.report_code || report.id, report.player_name || 'Sin nombre', date]
+      .forEach(value => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        tr.appendChild(td);
+      });
+
+    const statusCell = document.createElement('td');
+    const pill = document.createElement('span');
+    pill.className = 'pill ' + (
+      report.scan_status === 'cleared' ? 'green' :
+      report.scan_status === 'reviewed' ? 'yellow' : 'pink'
+    );
+    pill.textContent = report.scan_status || 'pending';
+    statusCell.appendChild(pill);
+    tr.appendChild(statusCell);
+
+    const actionCell = document.createElement('td');
+    const button = document.createElement('button');
+    button.className = 'btn';
+    button.textContent = 'Ver informe';
+    button.addEventListener('click', () => showReport(report));
+    actionCell.appendChild(button);
+    tr.appendChild(actionCell);
+    rows.appendChild(tr);
+  });
+}
+
+function copyLink() {
+  toast('La función de enlace privado todavía no está configurada.');
+}
+
+function discordDemo() {
+  toast('La integración con Discord todavía no está configurada.');
+}
+
+document.addEventListener('DOMContentLoaded', loadReports);
+</script>
+</body></html>
+
 
